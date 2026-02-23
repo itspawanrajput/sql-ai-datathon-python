@@ -1,115 +1,174 @@
-# 🧠 SQL AI Datathon — Python RAG Solution
-
-> My Python implementation for the **[Microsoft SQL AI Datathon](https://github.com/microsoft/sql-ai-datathon)** — building a full Retrieval-Augmented Generation (RAG) pipeline using **PostgreSQL + pgvector** and **OpenAI GPT-4o-mini**, exposed as a **FastAPI** service.
+# 🚀 AI-Powered SQL RAG System (Open Hack Project)
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.131+-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?logo=openai)](https://platform.openai.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql)](https://github.com/pgvector/pgvector)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17_AWS_RDS-336791?logo=postgresql)](https://github.com/pgvector/pgvector)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
----
+## 📌 Overview
 
-## 📌 What This Project Does
+This project demonstrates a **production-style Retrieval-Augmented Generation (RAG) system** built using:
 
-This project answers natural language questions by:
+- 🐘 **PostgreSQL** (AWS RDS)
+- 🧠 **OpenAI Embeddings & LLM**
+- 🔎 **pgvector** for semantic search
+- ⚡ **FastAPI** for API layer
+- 🧩 **Modular service architecture**
 
-1. **Generating embeddings** from text using `text-embedding-3-small`
-2. **Storing them** in a PostgreSQL database with the `pgvector` extension
-3. **Searching** the database using cosine similarity (`<->` operator)
-4. **Answering** questions via GPT-4o-mini with the retrieved context (RAG pattern)
-
-```
-User Question
-     │
-     ▼
-[Embedding Model] ──► Generate query vector
-     │
-     ▼
-[PostgreSQL + pgvector] ──► Cosine similarity search → Top-K documents
-     │
-     ▼
-[GPT-4o-mini] ──► RAG prompt → Natural language answer
-```
+The system enables users to ask natural language questions and receive answers **grounded in stored database content** using vector similarity search.
 
 ---
 
-## 🗂️ Project Structure
+## 🏗️ Architecture
+
+```
+User
+  ↓
+FastAPI (/ask endpoint)
+  ↓
+RAG Service
+  ↓
+Retrieval Service
+  ↓
+PostgreSQL (AWS RDS + pgvector)
+  ↓
+OpenAI Embeddings + Chat Model
+```
+
+---
+
+## 🎯 Problem Statement
+
+Traditional SQL search relies on:
+- Exact matches
+- `LIKE` queries
+- Keyword search
+
+This project enhances search capabilities using:
+- **Vector embeddings**
+- **Semantic similarity**
+- **Context-aware AI responses**
+
+It bridges structured databases with modern GenAI systems.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Database | PostgreSQL 17 (AWS RDS) |
+| Vector Search | pgvector |
+| AI Embeddings | OpenAI `text-embedding-3-small` |
+| LLM | OpenAI `gpt-4o-mini` |
+| Backend | FastAPI |
+| ORM | SQLAlchemy |
+| Environment | Python (`uv` managed) |
+
+---
+
+## 📂 Project Structure
 
 ```
 sql-ai-datathon-python/
 │
-├── app.py                  # CLI interactive Q&A loop
-├── main.py                 # FastAPI web server entry point
-├── embeddings.py           # Embedding generation (standalone)
-├── insert_data.py          # Insert documents with embeddings into DB
-├── search.py               # Vector similarity search (standalone)
-├── rag.py                  # Full RAG pipeline (standalone)
-├── test_connection.py      # Verify database connectivity
-│
 ├── db/
-│   └── connection.py       # SQLAlchemy engine setup
+│   └── connection.py           # SQLAlchemy engine setup
 │
 ├── services/
-│   ├── embeddings_service.py   # Embedding generation service
-│   ├── retrieval_service.py    # Vector similarity retrieval
-│   └── rag_service.py          # RAG orchestration (retrieve → prompt → answer)
+│   ├── embeddings_service.py   # OpenAI embedding generation
+│   ├── retrieval_service.py    # pgvector cosine similarity search
+│   └── rag_service.py          # RAG orchestration
 │
 ├── missions/
 │   └── mission1_embeddings/    # Mission 1: Embeddings & Vector Search
 │
-├── pyproject.toml          # Project metadata & dependencies (uv)
-├── requirements.txt        # pip-compatible dependencies
-├── .env.example            # Environment variable template
-└── README.md
+├── main.py                     # FastAPI server
+├── app.py                      # CLI interactive Q&A loop
+├── embeddings.py               # Standalone embedding utility
+├── insert_data.py              # Insert documents into DB
+├── search.py                   # Standalone vector search
+├── rag.py                      # Standalone RAG pipeline
+├── test_connection.py          # DB connectivity test
+├── .env.example                # Environment variable template
+├── requirements.txt            # pip dependencies
+└── pyproject.toml              # uv project config
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🔍 How It Works
 
-### Prerequisites
+### 1️⃣ Embedding Generation
 
-- Python 3.12+
-- PostgreSQL with [`pgvector`](https://github.com/pgvector/pgvector) extension enabled
-- An [OpenAI API key](https://platform.openai.com/api-keys)
+Text content is converted into vector embeddings using OpenAI:
+
+```python
+generate_embedding(text)
+```
+
+Embeddings are stored in PostgreSQL using the `VECTOR(1536)` datatype.
+
+### 2️⃣ Semantic Retrieval
+
+When a user asks a question:
+- The query is embedded
+- Vector similarity search is performed using:
+
+```sql
+ORDER BY embedding <-> CAST(:query_embedding AS vector)
+```
+
+This retrieves the most semantically relevant documents.
+
+### 3️⃣ Retrieval-Augmented Generation (RAG)
+
+Retrieved content is injected into a structured prompt:
+
+```
+Context:
+<retrieved documents>
+
+Question:
+<user question>
+```
+
+The LLM generates an answer **grounded strictly in the retrieved context**. Hallucination protection is enforced via prompt constraints.
+
+---
+
+## 🚀 Running the Project
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/sql-ai-datathon-python.git
+git clone https://github.com/itspawanrajput/sql-ai-datathon-python.git
 cd sql-ai-datathon-python
 ```
 
-### 2. Set Up Environment Variables
+### 2. Install Dependencies
+
+```bash
+uv sync
+# or with pip:
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your credentials:
+Edit `.env`:
 
 ```env
-OPENAI_API_KEY=sk-proj-...
-DATABASE_URL=postgresql+psycopg2://postgres:yourpassword@localhost:5432/yourdb
-```
-
-### 3. Install Dependencies
-
-**Using pip:**
-```bash
-pip install -r requirements.txt
-```
-
-**Using uv (recommended):**
-```bash
-pip install uv
-uv sync
+OPENAI_API_KEY=your_key
+DATABASE_URL=postgresql+psycopg2://user:password@host:5432/postgres
 ```
 
 ### 4. Enable pgvector in PostgreSQL
-
-Connect to your database and run:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -122,98 +181,80 @@ CREATE TABLE IF NOT EXISTS documents (
 );
 ```
 
-### 5. Test the Database Connection
+### 5. Run API Server
 
 ```bash
-python test_connection.py
-# Expected output: 1
+uv run uvicorn main:app --reload
+```
+
+Open: `http://127.0.0.1:8000/docs`
+
+Test endpoint:
+
+```
+GET /ask?q=What does this project demonstrate?
 ```
 
 ---
 
-## 🧪 Usage
+## 📊 Example Output
 
-### Insert a Document
-
-```bash
-python insert_data.py
-```
-
-This generates an embedding for the sample document and stores it in the database.
-
-### Search with Vector Similarity
-
-```bash
-python search.py
-```
-
-Queries the database using cosine similarity and returns the top-3 most relevant documents.
-
-### Run the RAG Pipeline (CLI)
-
-```bash
-python app.py
-```
-
-Interactive loop — ask any question, get an AI-powered answer grounded in your documents:
-
-```
-Ask: What is this project about?
-Answer:
- This project demonstrates vector search using PostgreSQL and OpenAI embeddings...
-```
-
-### Run the FastAPI Server
-
-```bash
-uvicorn main:app --reload
-```
-
-Then visit: `http://localhost:8000/ask?q=What+is+this+project+about`
-
-Example response:
 ```json
 {
-  "question": "What is this project about?",
+  "question": "What does this project demonstrate?",
   "answer": "This project demonstrates vector search using PostgreSQL and OpenAI embeddings."
 }
 ```
 
-API Docs available at: `http://localhost:8000/docs`
+---
+
+## 🔐 Security Considerations
+
+- SSL-enabled database connection
+- Restricted RDS security group (IP-based access)
+- No public exposure of secrets
+- Environment variables for all configuration (`.env` excluded from git)
 
 ---
 
-## ⚙️ Tech Stack
+## 📈 Future Improvements (Open Hack Extensions)
 
-| Layer | Technology |
-|-------|-----------|
-| Language | Python 3.12 |
-| AI / LLM | OpenAI GPT-4o-mini |
-| Embeddings | OpenAI text-embedding-3-small (1536 dims) |
-| Vector DB | PostgreSQL + pgvector |
-| ORM | SQLAlchemy |
-| API Server | FastAPI + Uvicorn |
-| Env Management | python-dotenv |
+- [ ] Document chunking for improved retrieval accuracy
+- [ ] Batch ingestion pipeline
+- [ ] IVFFLAT / HNSW vector indexing
+- [ ] Authentication & API rate limiting
+- [ ] Docker containerization
+- [ ] EC2 deployment
+- [ ] Frontend chat UI
+
+---
+
+## 🧠 Key Learnings
+
+- Vector databases inside relational systems
+- `pgvector` indexing strategies
+- Prompt engineering for RAG systems
+- AWS networking (VPC, security groups, SSL)
+- Modular backend design
+- Production-ready API patterns
+
+---
+
+## 💼 Why This Project Matters
+
+This project demonstrates:
+- **Cloud-native AI architecture**
+- **SQL + AI integration**
+- **Real-world RAG pipeline**
+- **End-to-end system design**
+
+It reflects practical implementation of modern GenAI systems used in startups and enterprise environments.
 
 ---
 
 ## 🏆 About the Challenge
 
-This is my solution for the **[Microsoft SQL AI Datathon](https://github.com/microsoft/sql-ai-datathon)** — a hands-on challenge to build AI-powered applications using SQL databases with vector search capabilities.
-
-**Mission 1:** Generate embeddings with OpenAI and store them in PostgreSQL using pgvector, then implement cosine similarity search and a full RAG pipeline.
-
----
-
-## 🔐 Security Note
-
-Never commit your `.env` file. The `.gitignore` is configured to exclude it. Use `.env.example` as a template.
-
----
-
-## 📄 License
-
-This project is open source under the [MIT License](LICENSE).
+Built for the **[Microsoft SQL AI Datathon](https://github.com/microsoft/sql-ai-datathon)** — a hands-on challenge to build AI-powered applications using SQL databases with vector search capabilities.
 
 ---
 
